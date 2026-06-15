@@ -1,0 +1,74 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getCollection, render } from 'astro:content';
+import { site } from '../../site.config';
+
+export async function getStaticPaths() {
+  const projects = await getCollection('projects', e => !e.data.draft);
+  return projects.map(p => ({ params: { slug: p.id }, props: { project: p } }));
+}
+
+const { project } = Astro.props;
+const { Content } = await render(project);
+
+const typeBadge: Record<string,string> = {
+  wip:'badge-wip', build:'badge-build', guide:'badge-guide', document:'badge-document',
+};
+const typeLabel: Record<string,string> = {
+  wip:'In progress', build:'Build log', guide:'Guide', document:'Document',
+};
+---
+<Base title={`${project.data.title} — ${site.name}`} description={project.data.description}>
+<style>
+  .proj-hero { padding: 48px 0 40px; }
+  .back { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); text-decoration: none; display: inline-flex; align-items: center; gap: 5px; margin-bottom: 28px; transition: color 0.2s; }
+  .back:hover { color: var(--text); }
+  .back svg { width: 13px; height: 13px; }
+  .proj-meta { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+  .proj-date { font-family: var(--mono); font-size: 0.7rem; color: var(--muted); }
+  .proj-title { font-family: var(--serif); font-size: clamp(2rem, 4vw, 3.2rem); letter-spacing: -0.8px; line-height: 1.06; margin-bottom: 16px; }
+  .proj-lead  { font-size: 1.05rem; color: var(--muted); font-weight: 300; line-height: 1.8; max-width: 620px; margin-bottom: 28px; }
+  .proj-tags  { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 28px; }
+  .proj-links { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 48px; }
+  .proj-body  { max-width: 720px; padding-bottom: 80px; }
+  .proj-body :global(h2) { font-family: var(--serif); font-size: 1.8rem; letter-spacing: -0.3px; margin: 44px 0 14px; padding-top: 44px; border-top: 1px solid var(--border); }
+  .proj-body :global(h2:first-child) { margin-top: 0; padding-top: 0; border-top: none; }
+  .proj-body :global(h3) { font-size: 1rem; font-weight: 500; margin: 24px 0 8px; }
+  .proj-body :global(p)  { font-size: 0.96rem; color: var(--muted); line-height: 1.85; margin-bottom: 16px; font-weight: 300; }
+  .proj-body :global(strong) { color: var(--text); font-weight: 500; }
+  .proj-body :global(a)  { color: var(--accent); }
+  .proj-body :global(ul), .proj-body :global(ol) { padding-left: 1.4rem; margin-bottom: 16px; }
+  .proj-body :global(li) { font-size: 0.96rem; color: var(--muted); line-height: 1.85; margin-bottom: 6px; font-weight: 300; }
+  .proj-body :global(pre) { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; overflow-x: auto; margin: 20px 0; }
+  .proj-body :global(code) { font-family: var(--mono); font-size: 0.82rem; line-height: 1.7; }
+  .proj-body :global(p code) { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; font-size: 0.83em; }
+  .proj-body :global(img) { width: 100%; border-radius: 12px; border: 1px solid var(--border); margin: 20px 0; display: block; }
+  .proj-body :global(blockquote) { border-left: 3px solid var(--accent); padding: 12px 20px; margin: 20px 0; background: rgba(63,77,92,0.05); border-radius: 0 8px 8px 0; }
+  .proj-body :global(blockquote p) { margin-bottom: 0; }
+  .proj-body :global(table) { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.88rem; }
+  .proj-body :global(th) { font-family: var(--mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); text-align: left; padding: 10px 14px; border-bottom: 2px solid var(--border); }
+  .proj-body :global(td) { padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--text); }
+  .proj-body :global(hr) { border: none; border-top: 1px solid var(--border); margin: 36px 0; }
+</style>
+  <div class="wrap">
+    <div class="proj-hero">
+      <a class="back" href="/#projects">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        Back to projects
+      </a>
+      <div class="proj-meta">
+        <span class={`type-badge ${typeBadge[project.data.type]}`}>{typeLabel[project.data.type]}</span>
+        <span class="proj-date">{project.data.date}</span>
+      </div>
+      <div class="proj-title">{project.data.title}</div>
+      <p class="proj-lead">{project.data.description}</p>
+      <div class="proj-tags">{project.data.tags.map(t => <span class="chip">{t}</span>)}</div>
+      <div class="proj-links">
+        {project.data.repo && <a class="link-pill" href={project.data.repo} target="_blank" rel="noopener">GitHub repo →</a>}
+        {project.data.youtube && <a class="link-pill" href={project.data.youtube} target="_blank" rel="noopener">Watch on YouTube →</a>}
+      </div>
+    </div>
+    <hr>
+    <div class="proj-body"><Content /></div>
+  </div>
+</Base>

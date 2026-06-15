@@ -1,0 +1,178 @@
+---
+import '../styles/global.css';
+import { site, cv } from '../site.config';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = site.metaTitle,
+  description = site.metaDescription,
+} = Astro.props;
+
+// Single source of truth: footer note comes from site.config (**bold** supported).
+const consulting = site.consultingNote.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+---
+
+<!doctype html>
+<html lang="en" data-theme="">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{title}</title>
+  <meta name="description" content={description} />
+
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%233f4d5c'/%3E%3Ctext x='16' y='22' font-family='Georgia,serif' font-size='18' font-weight='400' fill='%23faf9f7' text-anchor='middle' font-style='italic'%3EYN%3C/text%3E%3C/svg%3E" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:url" content={site.url} />
+  <meta name="theme-color" content="#3f4d5c" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#141413" media="(prefers-color-scheme: dark)" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400;1,9..144,600&family=IBM+Plex+Sans:wght@300;400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <!-- Set theme before first paint to avoid a flash of the wrong theme. -->
+  <script is:inline>
+    (() => {
+      const saved = localStorage.getItem('theme');
+      const sys = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', saved || sys);
+    })();
+  </script>
+
+  <!-- Without JS the IntersectionObserver never runs; keep faded content visible. -->
+  <noscript><style>.fade { opacity: 1 !important; transform: none !important; }</style></noscript>
+</head>
+<body>
+
+  <!-- ── Nav ── -->
+  <nav>
+    <div class="nav-inner">
+      <a class="nav-logo" href="/">{site.name}</a>
+      <div class="nav-right">
+        <ul class="nav-links">
+          <li><a href="/#about">about</a></li>
+          <li><a href="/#skills">skills</a></li>
+          <li><a href="/#projects">projects</a></li>
+          <li><a href="/#resources">resources</a></li>
+          <li><a href="/#ventures">ventures</a></li>
+          <li><a href={cv.href} target={cv.external ? '_blank' : undefined} rel={cv.external ? 'noopener' : undefined}>cv</a></li>
+        </ul>
+        <button class="toggle" id="themeToggle" aria-label="Toggle dark mode">
+          <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/>
+          </svg>
+          <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+          </svg>
+          <span id="tlabel">dark</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <slot />
+
+  <!-- ── Footer ── -->
+  <footer>
+    <div class="wrap">
+      <div class="footer-inner">
+        <div class="footer-name">{site.name}</div>
+        <div class="consulting-note">
+          <p set:html={consulting} />
+        </div>
+        <div class="footer-links">
+          <a href={site.linkedin} target="_blank" rel="noopener">LinkedIn</a>
+          <a href={site.github} target="_blank" rel="noopener">GitHub</a>
+          <a href={site.youtube} target="_blank" rel="noopener">YouTube</a>
+          <a href={`mailto:${site.email}`}>Email</a>
+          <a href={cv.href} target={cv.external ? '_blank' : undefined} rel={cv.external ? 'noopener' : undefined}>CV</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // ── Dark mode ──────────────────────────────────────────
+    const root  = document.documentElement;
+    const btn   = document.getElementById('themeToggle');
+    const lbl   = document.getElementById('tlabel');
+    const sys   = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    const saved = localStorage.getItem('theme');
+
+    function applyTheme(t: string) {
+      root.setAttribute('data-theme', t);
+      if (lbl) lbl.textContent = t === 'dark' ? 'light' : 'dark';
+    }
+    applyTheme(saved || sys);
+
+    btn?.addEventListener('click', () => {
+      const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      applyTheme(next);
+      localStorage.setItem('theme', next);
+    });
+
+    // ── Scroll fade-in ─────────────────────────────────────
+    const observer = new IntersectionObserver(
+      (entries) => entries.forEach(e => {
+        if (e.isIntersecting) { e.target.classList.add('in'); observer.unobserve(e.target); }
+      }),
+      { threshold: 0.06 }
+    );
+    document.querySelectorAll('.fade').forEach(el => observer.observe(el));
+
+    // ── Draggable rails ────────────────────────────────────
+    document.querySelectorAll<HTMLElement>('.rail').forEach(rail => {
+      let active = false, startX = 0, scrollLeft = 0;
+      rail.addEventListener('mousedown', e => {
+        active = true;
+        startX = e.pageX - rail.offsetLeft;
+        scrollLeft = rail.scrollLeft;
+      });
+      document.addEventListener('mouseup', () => active = false);
+      rail.addEventListener('mousemove', e => {
+        if (!active) return;
+        e.preventDefault();
+        rail.scrollLeft = scrollLeft - (e.pageX - rail.offsetLeft - startX);
+      });
+      // touch support
+      let touchStart = 0, touchScroll = 0;
+      rail.addEventListener('touchstart', e => {
+        touchStart = e.touches[0].pageX;
+        touchScroll = rail.scrollLeft;
+      }, { passive: true });
+      rail.addEventListener('touchmove', e => {
+        rail.scrollLeft = touchScroll - (e.touches[0].pageX - touchStart);
+      }, { passive: true });
+    });
+
+    // ── Active nav on scroll ───────────────────────────────
+    const navLinks = document.querySelectorAll<HTMLAnchorElement>('.nav-links a[href^="/#"]');
+    const sections = Array.from(navLinks)
+      .map(a => document.getElementById(a.getAttribute('href')!.slice(2)))
+      .filter(Boolean) as HTMLElement[];
+
+    const navObserver = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter(e => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visible.length) {
+          const id = visible[0].target.id;
+          navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === `/#${id}`));
+        }
+      },
+      { rootMargin: '-40% 0px -55% 0px', threshold: 0 }
+    );
+    sections.forEach(s => navObserver.observe(s));
+  </script>
+
+</body>
+</html>

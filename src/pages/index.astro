@@ -1,0 +1,248 @@
+---
+import Base from '../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+import { site, cv } from '../site.config';
+
+// Featured first, then newest first (stable sort preserves file order among equals).
+const projects  = (await getCollection('projects',  e => !e.data.draft))
+  .sort((a,b) => Number(b.data.featured) - Number(a.data.featured) || (a.data.date < b.data.date ? 1 : -1));
+const resources = (await getCollection('resources', e => !e.data.draft))
+  .sort((a,b) => Number(b.data.featured) - Number(a.data.featured));
+const ventures  = (await getCollection('ventures',  e => !e.data.draft));
+
+const typeBadge = { wip:'badge-wip', build:'badge-build', guide:'badge-guide', document:'badge-document', template:'badge-template', checklist:'badge-checklist', config:'badge-config' };
+const typeIcon  = { wip:'icon-wip', build:'icon-build', guide:'icon-guide', document:'icon-document', template:'icon-template', checklist:'icon-checklist', config:'icon-config' };
+const statusClass = { active:'status-active', development:'status-development', stealth:'status-stealth', complete:'status-complete' };
+
+const icons = {
+  build:    `<path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>`,
+  wip:      `<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>`,
+  guide:    `<path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>`,
+  document: `<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>`,
+  template: `<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>`,
+  checklist:`<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>`,
+  config:   `<circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2M12 20v2M2 12h2M20 12h2M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41"/>`,
+};
+
+// Convert **bold** markers in bio text to <strong> tags
+function renderBio(text: string) {
+  return text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+}
+
+// Split tagline around the emphasised word
+const taglineParts = site.tagline.split(site.taglineEm);
+---
+<Base>
+
+  <div class="wrap">
+    <div class="hero">
+      <div>
+        <div class="eyebrow">{site.title}</div>
+        <h1>{taglineParts[0]}<em>{site.taglineEm}</em>{taglineParts[1]}</h1>
+        <p class="hero-lead">{site.lead}</p>
+        <div class="currently">
+          <span class="currently-dot"></span>
+          <span class="currently-label">Currently</span>
+          <span>{site.currently}</span>
+        </div>
+        <div class="link-row">
+          <a class="link-pill primary" href={cv.href} target={cv.external ? '_blank' : undefined} rel={cv.external ? 'noopener' : undefined}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3h7l3 3v15H7V3Z"/><path d="M14 3v4h3M9 12h6M9 16h4"/></svg>
+            Download CV
+          </a>
+          <a class="link-pill" href={site.linkedin} target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="20" height="20" rx="4"/><path d="M7 10v7M7 7v.01M11 17v-4a2 2 0 014 0v4M11 10v7"/></svg>
+            LinkedIn
+          </a>
+          <a class="link-pill" href={site.github} target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 19c-4 1.5-4-2.5-5-3m10 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 00-1.3-3.2 4.2 4.2 0 00-.1-3.2s-1-.3-3.3 1.3a11.5 11.5 0 00-6 0C6.3 2.8 5.3 3.1 5.3 3.1a4.2 4.2 0 00-.1 3.2A4.6 4.6 0 004 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1-.5 2V21"/></svg>
+            GitHub
+          </a>
+          <a class="link-pill" href={site.youtube} target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M23 7s-.3-2-1.2-2.7c-1.1-1.2-2.4-1.2-3-1.3C16.4 3 12 3 12 3s-4.4 0-6.8.1c-.6 0-1.9.1-3 1.2C1.3 5 1 7 1 7S.7 9.2.7 11.5v2.1c0 2.2.3 4.4.3 4.4s.3 2 1.2 2.7c1.1 1.2 2.6 1.1 3.3 1.2C7.5 22 12 22 12 22s4.4 0 6.8-.2c.6 0 1.9-.1 3-1.2.9-.8 1.2-2.7 1.2-2.7s.3-2.2.3-4.4v-2.1C23.3 9.2 23 7 23 7zM9.7 15.5V8.4l8.1 3.6-8.1 3.5z"/></svg>
+            YouTube
+          </a>
+          <a class="link-pill" href={`mailto:${site.email}`}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16v12H4V6Z"/><path d="M4 7l8 6 8-6"/></svg>
+            Email
+          </a>
+        </div>
+      </div>
+      <div class="hero-card">
+        <div class="card-head">DATASHEET</div>
+        {site.datasheet.map(row => (
+          <div class="stat">
+            <span class="stat-k">{row.key}</span>
+            <span class="stat-v">
+              {row.dot && <span class="dot"></span>}
+              {row.value}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <section id="about" class="alt">
+    <div class="wrap">
+      <div class="sec-label">About</div>
+      <h2>A bit about <em>me.</em></h2>
+      <div class="about-top fade">
+        <div class="about-photo" id="aboutPhoto">
+          <img src="/me.jpg" alt={site.name} onerror="this.parentElement.classList.add('no-photo');this.style.display='none'">
+          <div class="photo-fallback">
+            <div class="fallback-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 016-6h4a6 6 0 016 6v1"/></svg>
+            </div>
+            <div class="fallback-label">add me.jpg<br>to /public/</div>
+          </div>
+        </div>
+        <div class="facts">
+          {site.facts.map(f => (
+            <div class="fact">
+              <span class="fact-k">{f.key}</span>
+              <span class="fact-v">{f.value}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div class="about-bio fade">
+        {site.bio.map(para => (
+          <p set:html={renderBio(para)} />
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <hr>
+
+  <section id="skills">
+    <div class="wrap">
+      <div class="sec-label">Skills</div>
+      <h2>What I work with.</h2>
+      <div class="skills-grid">
+        {site.skills.map(group => (
+          <div class="skill-group fade">
+            <div class="skill-label">{group.label}</div>
+            <ul class="skill-list">
+              {group.items.map(item => <li>{item}</li>)}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <hr>
+
+  <section id="projects" class="alt">
+    <div class="wrap">
+      <div class="rail-header">
+        <div><div class="sec-label">Projects</div><h2>Things I'm <em>building.</em></h2></div>
+        <div class="scroll-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>drag to scroll</div>
+      </div>
+      <div class="rail-wrap">
+        <div class="rail">
+          {projects.map(p => (
+            <a class="p-card fade" href={`/projects/${p.id}`}>
+              <div class={`p-card-icon ${typeIcon[p.data.type]}`}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" set:html={icons[p.data.type]} />
+              </div>
+              <span class={`type-badge ${typeBadge[p.data.type]}`}>{p.data.type === 'wip' ? 'In progress' : p.data.type}</span>
+              <div class="p-card-title">{p.data.title}</div>
+              <p class="p-card-desc">{p.data.description}</p>
+              <div class="p-card-tags">{p.data.tags.map(t => <span class="chip">{t}</span>)}</div>
+              <div class="p-card-foot"><span>{p.data.status ?? p.data.date}</span><span class="p-card-cta">Read →</span></div>
+            </a>
+          ))}
+          <div class="p-card ghost">
+            <span class="type-badge badge-soon">Coming soon</span>
+            <div class="p-card-title">More on the way.</div>
+            <p class="p-card-desc">Projects documented here as they reach a shareable state.</p>
+            <div class="p-card-tags"><span class="chip">Watch this space</span></div>
+          </div>
+        </div>
+        <div class="rail-fade"></div>
+      </div>
+    </div>
+  </section>
+
+  <hr>
+
+  <section id="resources">
+    <div class="wrap">
+      <div class="rail-header">
+        <div><div class="sec-label">Resources</div><h2>Useful stuff, <em>freely shared.</em></h2></div>
+        <div class="scroll-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>drag to scroll</div>
+      </div>
+      <div class="rail-wrap">
+        <div class="rail">
+          {resources.map(r => (
+            <div class="p-card fade">
+              <div class={`p-card-icon ${typeIcon[r.data.type]}`}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" set:html={icons[r.data.type]} />
+              </div>
+              <span class={`type-badge ${typeBadge[r.data.type]}`}>{r.data.type}</span>
+              <div class="p-card-title">{r.data.title}</div>
+              <p class="p-card-desc">{r.data.description}</p>
+              <div class="p-card-tags">{r.data.tags.map(t => <span class="chip">{t}</span>)}</div>
+              <div class="p-card-foot">
+                <span>{r.data.updated}</span>
+                {r.data.file
+                  ? <a class="p-card-dl" href={`/files/${r.data.file}`} download onclick="event.stopPropagation()">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download
+                    </a>
+                  : r.data.url
+                    ? <a class="p-card-cta" href={r.data.url} target="_blank" rel="noopener">Open ↗</a>
+                    : <a class="p-card-cta" href={`/resources/${r.id}`}>Read →</a>
+                }
+              </div>
+            </div>
+          ))}
+        </div>
+        <div class="rail-fade"></div>
+      </div>
+    </div>
+  </section>
+
+  <hr>
+
+  <section id="ventures" class="alt">
+    <div class="wrap">
+      <div class="rail-header">
+        <div><div class="sec-label">Ventures</div><h2>Building things <em>beyond</em> the day job.</h2></div>
+        <div class="scroll-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>drag to scroll</div>
+      </div>
+      <div class="rail-wrap">
+        <div class="rail">
+          {ventures.map(v => (
+            <div class="v-card fade">
+              <div class="v-card-top">
+                <div class="v-logo">{v.data.logo ? <img src={v.data.logo} alt={`${v.data.name} logo`} /> : v.data.name.slice(0,2).toUpperCase()}</div>
+                <div>
+                  <span class={`v-status-badge status-${v.data.status}`}>{v.data.status}</span>
+                  <div class="v-name" style="margin-top:5px">{v.data.name}</div>
+                </div>
+              </div>
+              <p class="v-tagline">{v.data.tagline}</p>
+              {(v.data.url || v.data.email) && (
+                <div class="v-foot">
+                  {v.data.url && <a class="link-pill" href={v.data.url} target="_blank" rel="noopener" style="font-size:0.72rem;padding:6px 13px">Visit site →</a>}
+                  {v.data.email && <a class="link-pill" href={`mailto:${v.data.email}`} style="font-size:0.72rem;padding:6px 13px">Get in touch</a>}
+                </div>
+              )}
+            </div>
+          ))}
+          <div class="v-card ghost">
+            <div class="v-ghost-plus">+</div>
+            <div class="v-ghost-label">More ventures<br>on the way</div>
+          </div>
+        </div>
+        <div class="rail-fade"></div>
+      </div>
+    </div>
+  </section>
+
+</Base>
