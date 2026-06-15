@@ -162,27 +162,114 @@ swap the `--serif` / `--sans` / `--mono` variables (and the Google Fonts link in
 
 Each project, resource, and venture is a Markdown file with a small frontmatter
 block. **Add a file → a card appears.** Delete the `example-*` files once you've
-got the idea.
+got the idea. The filename becomes the URL (`my-project.md` → `/projects/my-project`),
+and `draft: true` hides anything without deleting it.
 
-> **Full authoring reference:** [WRITING-CONTENT.md](WRITING-CONTENT.md) is the
-> complete guide — the frontmatter fields for every content type and every
-> Markdown feature the pages support (captioned images, syntax-highlighted code,
-> maths, task lists, footnotes, and automatic touches like reading-time, drop
-> caps, and a table of contents). The quick version:
+> **Full authoring reference:** [WRITING-CONTENT.md](WRITING-CONTENT.md) lists
+> every frontmatter field and every Markdown feature (captioned images,
+> syntax-highlighted code, maths, task lists, footnotes, and automatic touches
+> like reading-time and a table of contents). The examples below get you started.
 
-- **Projects** (`src/content/projects/`) — `type: build | guide | document | wip`, a `date`, optional `repo`/`youtube` buttons.
-- **Resources** (`src/content/resources/`) resolve three ways:
+### Projects
 
-  | Frontmatter | Card behaviour |
-  |-------------|----------------|
-  | `file: thing.pdf` | **Download** button (file goes in `public/files/`) |
-  | `url: https://…` | **Open ↗** link to anything hosted elsewhere |
-  | neither | A readable **page** is generated, card shows **Read →** |
+Create a `.md` file in `src/content/projects/`.
 
-- **Ventures** (`src/content/ventures/`) — `status: active | development | stealth | complete`, optional `logo`, `url`, `email`.
+```markdown
+---
+title: My Project
+description: One sentence — used on the card and the page header.
+type: build           # build | guide | document | wip
+tags: [Tag, Tag]
+date: "2025-06"       # "YYYY-MM" — newest first
+status: In progress   # optional — shown on the card instead of the date
+repo: https://github.com/...      # optional — adds a "GitHub repo" button
+youtube: https://youtube.com/...  # optional — adds a "Watch" button
+featured: false       # true pins it to the front of the rail
+draft: false          # true hides it
+---
 
-The filename becomes the URL (`my-project.md` → `/projects/my-project`), and
-`draft: true` hides anything without deleting it.
+## Overview
+
+Write your project content here in standard Markdown.
+```
+
+### Resources
+
+Resources work **three ways**, depending on the frontmatter.
+
+#### 1. A downloadable file
+
+Include a `file` field. The card shows a **Download** button and no page is
+created. Put the actual file in `public/files/`.
+
+```markdown
+---
+title: My Checklist
+description: One sentence describing the file.
+type: checklist       # template | checklist | guide | config
+tags: [Tag]
+updated: "Jun 2025"   # "Mon YYYY"
+file: my-checklist.pdf   # filename only — must exist in public/files/
+draft: false
+---
+```
+
+#### 2. A link to something hosted elsewhere
+
+Include a `url` field instead. The card shows an **Open ↗** link (opens in a new
+tab) and no page is created. Use it for public repos, generated docs, shared
+templates, or any externally-hosted asset.
+
+```markdown
+---
+title: My Template Repo
+description: One sentence describing the link.
+type: template
+tags: [Tag]
+updated: "Jun 2025"
+url: https://github.com/youruser/some-repo
+draft: false
+---
+```
+
+#### 3. A readable page (content in the `.md`)
+
+Omit both `file` and `url`. A full page is generated at `/resources/your-slug`,
+the card shows a **Read →** link, and everything below the frontmatter becomes
+the article.
+
+```markdown
+---
+title: My Guide
+description: One sentence describing the guide.
+type: guide
+tags: [Tag]
+updated: "Jun 2025"
+draft: false
+---
+
+## A heading
+
+Write your guide here — see WRITING-CONTENT.md for every Markdown feature.
+```
+
+### Ventures
+
+Create a `.md` file in `src/content/ventures/`. Each file becomes one card.
+
+```markdown
+---
+name: My Venture
+tagline: One sentence — what it is and who it's for.
+status: development   # active | development | stealth | complete
+founded: "2025"       # optional
+domain: Hardware      # optional — shown as a tag on the card
+logo: /logos/my-venture.svg   # optional (in public/) — else initials are used
+url: https://...      # optional — adds a "Visit site" button
+email: hi@...         # optional — adds a "Get in touch" button
+draft: false
+---
+```
 
 ---
 
