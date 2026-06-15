@@ -65,6 +65,11 @@ Each project, resource, and venture is a Markdown file with a small frontmatter
 block. **Add a file → a card appears.** Delete the `example-*` files once you've
 got the idea.
 
+> **Full authoring reference:** [WRITING-CONTENT.md](WRITING-CONTENT.md) covers
+> every content type and Markdown feature — captioned images, syntax-highlighted
+> code, task lists, footnotes, and automatic touches like reading-time, drop
+> caps, and a table of contents. The tables below are the quick version.
+
 ### Projects — `src/content/projects/`
 
 ```yaml
