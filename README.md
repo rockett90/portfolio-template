@@ -8,8 +8,30 @@ automatic deploys every time you push a change.
 No database, no CMS, no monthly bill. If you can edit a text file, you can run
 this site.
 
-> **New here?** The companion article *"How I Built This Site"* walks through
-> the whole thing in plain English. This README is the reference.
+---
+
+## Contents
+
+- [Requirements](#requirements)
+- [Quick start](#quick-start)
+- [Commands](#commands)
+- [Project structure](#project-structure)
+- [Personalising the site](#personalising-the-site)
+- [Adding content](#adding-content)
+- [CV and other external files](#cv-and-other-external-files)
+- [Deployment](#deployment)
+- [Troubleshooting](#troubleshooting)
+- [License](#license)
+
+---
+
+## Requirements
+
+- **Node.js v22.12.0 or higher** — check with `node --version` ([download](https://nodejs.org)).
+- **npm** — comes with Node, check with `npm --version`.
+
+You only need these to run the site **locally**. You can also edit everything in
+the GitHub web interface and let Cloudflare build it — no local setup at all.
 
 ---
 
@@ -23,39 +45,116 @@ clone anything by hand. (Prefer the command line? Clone it instead.)
 
 ### 2. Run it locally (optional but recommended)
 
-You'll need [Node.js](https://nodejs.org) v22.12+.
-
 ```bash
 npm install     # first time only
-npm run dev     # starts a live preview at http://localhost:4321
+npm run dev     # live preview at http://localhost:4321
 ```
 
-The site reloads as you save. You can also skip this and edit files directly on
-GitHub — Cloudflare will build it for you.
+The site reloads as you save.
 
 ### 3. Make it yours
 
 Work through this checklist and you're done:
 
 - [ ] Edit **`src/site.config.ts`** — your name, title, bio, links, skills, datasheet.
-- [ ] Replace the example files in **`src/content/projects/`**, **`resources/`**, and **`ventures/`** with your own (delete the `example-*` ones).
-- [ ] Add your CV at **`public/cv.pdf`** (or point `cv.strategy` elsewhere — see below).
+- [ ] Replace the `example-*` files in **`src/content/projects/`**, **`resources/`**, and **`ventures/`** with your own.
+- [ ] Add your CV at **`public/cv.pdf`** (or point `cv.strategy` elsewhere — see [CV](#cv-and-other-external-files)).
 - [ ] Add a photo at **`public/me.jpg`** (optional — a placeholder shows otherwise).
 - [ ] Update the favicon initials and colour in **`src/layouts/Base.astro`** (search for `YN`).
+- [ ] Recolour to taste — change `--accent` in **`src/styles/global.css`**.
 - [ ] Deploy (see [Deployment](#deployment)).
 
 ---
 
-## Personalising — `src/site.config.ts`
+## Commands
 
-This one file holds all the text content: identity, hero, social links, the
-hero "datasheet" card, the about facts and bio, skills, the footer note, and
-SEO tags. It's commented throughout. You shouldn't need to touch the page
-templates (`src/pages/index.astro`, `src/layouts/Base.astro`) unless you're
-changing the layout itself.
+All commands run from the project root:
 
-Colours and fonts live in **`src/styles/global.css`** at the top (the `:root`
-and `[data-theme="dark"]` blocks). Change `--accent` to recolour the whole site.
+| Command | Action |
+|---------|--------|
+| `npm install` | Install dependencies (once after copying) |
+| `npm run dev` | Start dev server at `http://localhost:4321` |
+| `npm run build` | Build the site to `./dist/` |
+| `npm run preview` | Build, then preview in the Workers runtime via `wrangler dev` |
+| `npm run deploy` | Build and deploy to Cloudflare |
+
+---
+
+## Project structure
+
+```
+portfolio-template/
+├── src/
+│   ├── content/
+│   │   ├── projects/         ← one .md file per project
+│   │   ├── resources/        ← one .md file per resource or article
+│   │   └── ventures/         ← one .md file per venture
+│   ├── layouts/
+│   │   └── Base.astro        ← shared nav, footer, and theme toggle
+│   ├── pages/
+│   │   ├── index.astro       ← the single-page site (hero, about, skills…)
+│   │   ├── projects/[slug].astro   ← auto-generated project pages
+│   │   └── resources/[slug].astro  ← auto-generated resource pages
+│   ├── styles/
+│   │   └── global.css        ← all design tokens, colours, and styles
+│   ├── site.config.ts        ← all your personal content — edit this
+│   └── content.config.ts     ← content schemas — do not edit
+├── public/
+│   ├── cv.pdf                ← add your CV (or configure cv.strategy)
+│   ├── me.jpg                ← add your photo (optional)
+│   └── files/                ← downloadable resource files go here
+├── astro.config.mjs          ← Markdown pipeline (code highlighting, math, captions)
+├── wrangler.jsonc            ← Cloudflare deploy config
+├── WRITING-CONTENT.md        ← full content authoring guide
+└── package.json
+```
+
+### Key files at a glance
+
+| File | Purpose |
+|------|---------|
+| `src/site.config.ts` | **Edit this** — all personal content: identity, bio, skills, links, datasheet, facts |
+| `src/styles/global.css` | Design tokens (colours, fonts) at the top; change `--accent` to recolour |
+| `src/pages/index.astro` | Page template — only edit to change the layout |
+| `src/layouts/Base.astro` | Nav, footer, theme toggle, and the favicon — only edit to change the layout |
+| `src/content.config.ts` | Defines and validates the content schemas — **do not edit** |
+| `WRITING-CONTENT.md` | The full guide to writing projects, resources, and articles |
+
+---
+
+## Personalising the site
+
+### Photo
+
+Add a file named `me.jpg` to the `public/` folder. A square or 4:3 crop works
+best. If it's missing, a placeholder icon shows instead.
+
+### Everything else — `src/site.config.ts`
+
+This one file holds all the text content. It's commented throughout; you
+shouldn't need to touch the page templates. It covers:
+
+| Property | What it controls |
+|----------|-----------------|
+| `name`, `title`, `email`, `url` | Identity used throughout the site |
+| `tagline`, `taglineEm` | Hero heading (and which word is emphasised) |
+| `lead` | Hero intro paragraph |
+| `currently` | The "Currently" line in the hero |
+| `linkedin`, `github`, `youtube` | Social links in the hero and footer |
+| `cv` | Where your CV PDF comes from (see [CV](#cv-and-other-external-files)) |
+| `datasheet` | The stats card in the hero (location, focus, etc.) |
+| `facts` | The facts table in the About section |
+| `bio` | Bio paragraphs — use `**text**` for bold |
+| `skills` | Skills grid — each group has a label and a list of items |
+| `consultingNote` | Footer "available for work" blurb |
+| `metaTitle`, `metaDescription` | SEO / link-preview tags |
+
+### Colours and fonts
+
+These live at the top of **`src/styles/global.css`**, in the `:root` (light) and
+`[data-theme="dark"]` blocks. Change `--accent` to recolour the whole site;
+swap the `--serif` / `--sans` / `--mono` variables (and the Google Fonts link in
+`src/layouts/Base.astro`) to change the type.
 
 ---
 
@@ -65,64 +164,29 @@ Each project, resource, and venture is a Markdown file with a small frontmatter
 block. **Add a file → a card appears.** Delete the `example-*` files once you've
 got the idea.
 
-> **Full authoring reference:** [WRITING-CONTENT.md](WRITING-CONTENT.md) covers
-> every content type and Markdown feature — captioned images, syntax-highlighted
-> code, task lists, footnotes, and automatic touches like reading-time, drop
-> caps, and a table of contents. The tables below are the quick version.
+> **Full authoring reference:** [WRITING-CONTENT.md](WRITING-CONTENT.md) is the
+> complete guide — the frontmatter fields for every content type and every
+> Markdown feature the pages support (captioned images, syntax-highlighted code,
+> maths, task lists, footnotes, and automatic touches like reading-time, drop
+> caps, and a table of contents). The quick version:
 
-### Projects — `src/content/projects/`
+- **Projects** (`src/content/projects/`) — `type: build | guide | document | wip`, a `date`, optional `repo`/`youtube` buttons.
+- **Resources** (`src/content/resources/`) resolve three ways:
 
-```yaml
-title: My Project
-description: One sentence for the card and page header.
-type: build            # build | guide | document | wip
-tags: [Tag, Tag]
-date: "2025-06"        # "YYYY-MM" — newest first
-featured: false        # true pins it to the front
-draft: false           # true hides it
-# repo: https://github.com/...     # optional button
-# youtube: https://youtube.com/...  # optional button
-```
+  | Frontmatter | Card behaviour |
+  |-------------|----------------|
+  | `file: thing.pdf` | **Download** button (file goes in `public/files/`) |
+  | `url: https://…` | **Open ↗** link to anything hosted elsewhere |
+  | neither | A readable **page** is generated, card shows **Read →** |
 
-The filename becomes the URL (`my-project.md` → `/projects/my-project`).
+- **Ventures** (`src/content/ventures/`) — `status: active | development | stealth | complete`, optional `logo`, `url`, `email`.
 
-### Resources — `src/content/resources/`
-
-Resources resolve three ways, in priority order:
-
-| Frontmatter | Card behaviour |
-|-------------|----------------|
-| `file: thing.pdf` | **Download** button (file goes in `public/files/`) |
-| `url: https://…` | **Open ↗** link to anything hosted elsewhere |
-| neither | A readable **page** is generated, card shows **Read →** |
-
-```yaml
-title: My Resource
-description: One sentence.
-type: guide            # template | checklist | guide | config
-tags: [Tag]
-updated: "Jun 2025"    # "Mon YYYY"
-featured: false
-draft: false
-```
-
-### Ventures — `src/content/ventures/`
-
-```yaml
-name: My Venture
-tagline: One line about it.
-status: development    # active | development | stealth | complete
-founded: "2025"        # optional
-domain: Hardware       # optional tag
-# logo: /logos/x.svg   # optional (in public/) — else initials are used
-# url: https://...     # optional "Visit site" button
-# email: hi@...        # optional "Get in touch" button
-draft: false
-```
+The filename becomes the URL (`my-project.md` → `/projects/my-project`), and
+`draft: true` hides anything without deleting it.
 
 ---
 
-## CV (and other external files)
+## CV and other external files
 
 The CV link is driven by the `cv` block in `site.config.ts`. Set `strategy` to
 choose where the PDF comes from — switching is a one-line change:
@@ -151,20 +215,47 @@ Config is in `wrangler.jsonc`.
 4. Save and deploy.
 
 Every push to `main` then rebuilds and republishes automatically. Until you add
-a custom domain, Cloudflare gives you a free `*.workers.dev` address. See
-Astro's [Cloudflare deployment guide](https://docs.astro.build/en/guides/deploy/cloudflare/)
+a custom domain, Cloudflare gives you a free `*.workers.dev` address.
+
+### Custom domain (subdomain)
+
+In the project's **Settings → Domains & Routes**, add your subdomain. Cloudflare
+gives you a CNAME target to add at your DNS provider (automatic if your domain is
+already on Cloudflare). HTTPS is handled for you. See Astro's
+[Cloudflare deployment guide](https://docs.astro.build/en/guides/deploy/cloudflare/)
 for the current screens.
 
 ---
 
-## Commands
+## Troubleshooting
 
-| Command | Action |
-|---------|--------|
-| `npm install` | Install dependencies (once after copying) |
-| `npm run dev` | Live preview at `http://localhost:4321` |
-| `npm run build` | Build to `./dist/` |
-| `npm run deploy` | Build and deploy to Cloudflare |
+**Build fails with a schema validation error**
+A required frontmatter field is missing or has the wrong value in one of your
+content files. The error message names the file and field — check it against
+[WRITING-CONTENT.md](WRITING-CONTENT.md).
+
+**Card not appearing after adding a `.md` file**
+Check that `draft: false` is set, and that the file is in the correct directory
+(`src/content/projects/`, `resources/`, or `ventures/`).
+
+**Photo not showing**
+Confirm the file is named exactly `me.jpg` (lowercase) and is in `public/`, not `src/`.
+
+**Downloadable resource not downloading**
+Confirm the filename in the `file` field exactly matches the file in
+`public/files/`, including extension and capitalisation.
+
+**`npm run dev` fails with a Node version error**
+This project needs Node.js v22.12.0+. Run `node --version` to check.
+
+**Windows: “running scripts is disabled on this system”**
+PowerShell blocks the `npm` script by default. Allow it for your user once with
+`Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned`, or run
+commands in Command Prompt (`cmd.exe`) instead.
+
+**Changes not appearing on the live site**
+Check the Cloudflare **Workers & Pages** dashboard for a failed build — the build
+log shows the error, most commonly a schema issue in a content file.
 
 ---
 
