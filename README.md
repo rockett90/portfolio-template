@@ -184,6 +184,10 @@ you need for day-to-day updates.
 The nav labels (About, Skills, Resources, Projects, Ventures) are in `sections` in
 `src/lib/content.ts`.
 
+The page language is British English (`lang="en-GB"` in `src/layouts/Base.astro`),
+and the "Site updated" month is formatted the same way in `astro.config.mjs`. Change
+both if you write in another language or locale.
+
 ### Email
 
 Your email address is never shown as text on the page. It's only used behind the
@@ -483,7 +487,8 @@ The site runs on **Cloudflare Workers with static assets** (Workers and Pages ar
 one product; this repo is configured as a Worker in `wrangler.jsonc`). Every route is
 prerendered. The Cloudflare adapter stays in place so on-demand routes remain possible
 later. Change `name` in `wrangler.jsonc` to set the Worker's name, which also sets its
-default `*.workers.dev` address.
+default `*.workers.dev` address. If you create the Worker in the dashboard (below),
+give it the same name as in `wrangler.jsonc`, or the deploy step fails.
 
 | Setting | Value |
 |---------|-------|
