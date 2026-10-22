@@ -10,20 +10,22 @@
     "build": "astro build",
     "preview": "npm run build && wrangler dev",
     "astro": "astro",
+    "images": "node --experimental-strip-types scripts/make-images.mjs",
     "generate-types": "wrangler types",
     "deploy": "npm run build && wrangler deploy"
   },
   "dependencies": {
-    "@astrojs/cloudflare": "^13.5.5",
-    "astro": "^6.3.8"
+    "@astrojs/cloudflare": "^14.3.3",
+    "@astrojs/markdown-remark": "^7.3.1",
+    "@astrojs/sitemap": "^3.7.4",
+    "@fontsource-variable/schibsted-grotesk": "^5.3.0",
+    "@fontsource-variable/source-serif-4": "^5.3.0",
+    "astro": "^7.3.4"
   },
   "devDependencies": {
     "katex": "^0.17.0",
     "rehype-katex": "^7.0.1",
     "remark-math": "^6.0.0",
-    "wrangler": "^4.95.0"
-  },
-  "overrides": {
-    "vite": "^7"
+    "wrangler": "^4.136.3"
   }
 }

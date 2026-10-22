@@ -1,248 +1,259 @@
 ---
 import Base from '../layouts/Base.astro';
-import { getCollection } from 'astro:content';
 import { site, cv } from '../site.config';
+import {
+  getContent, inlineBold, cvReady, cvAttrs, builtOn,
+  projectTypeLabel, resourceTypeLabel, ventureStatusLabel,
+} from '../lib/content';
 
-// Featured first, then newest first (stable sort preserves file order among equals).
-const projects  = (await getCollection('projects',  e => !e.data.draft))
-  .sort((a,b) => Number(b.data.featured) - Number(a.data.featured) || (a.data.date < b.data.date ? 1 : -1));
-const resources = (await getCollection('resources', e => !e.data.draft))
-  .sort((a,b) => Number(b.data.featured) - Number(a.data.featured));
-const ventures  = (await getCollection('ventures',  e => !e.data.draft));
+const { projects, resources, ventures } = await getContent();
 
-const typeBadge = { wip:'badge-wip', build:'badge-build', guide:'badge-guide', document:'badge-document', template:'badge-template', checklist:'badge-checklist', config:'badge-config' };
-const typeIcon  = { wip:'icon-wip', build:'icon-build', guide:'icon-guide', document:'icon-document', template:'icon-template', checklist:'icon-checklist', config:'icon-config' };
-const statusClass = { active:'status-active', development:'status-development', stealth:'status-stealth', complete:'status-complete' };
+const handle = (url: string) => url.replace(/\/+$/, '').split('/').pop();
+const consulting = inlineBold(site.consultingNote);
+const { credential, headings } = site;
 
-const icons = {
-  build:    `<path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>`,
-  wip:      `<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>`,
-  guide:    `<path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>`,
-  document: `<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>`,
-  template: `<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>`,
-  checklist:`<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>`,
-  config:   `<circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2M12 20v2M2 12h2M20 12h2M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41"/>`,
+const arrows = {
+  read:     '<path d="M2 8h11M8.5 3.5 13 8l-4.5 4.5"/>',
+  back:     '<path d="M14 8H3M7.5 3.5 3 8l4.5 4.5"/>',
+  open:     '<path d="M4 12 12 4M5.5 4H12v6.5"/>',
+  download: '<path d="M8 2v11M3.5 8.5 8 13l4.5-4.5"/>',
 };
-
-// Convert **bold** markers in bio text to <strong> tags
-function renderBio(text: string) {
-  return text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-}
-
-// Split tagline around the emphasised word
-const taglineParts = site.tagline.split(site.taglineEm);
 ---
 <Base>
 
-  <div class="wrap">
-    <div class="hero">
-      <div>
-        <div class="eyebrow">{site.title}</div>
-        <h1>{taglineParts[0]}<em>{site.taglineEm}</em>{taglineParts[1]}</h1>
-        <p class="hero-lead">{site.lead}</p>
-        <div class="currently">
-          <span class="currently-dot"></span>
-          <span class="currently-label">Currently</span>
-          <span>{site.currently}</span>
-        </div>
-        <div class="link-row">
-          <a class="link-pill primary" href={cv.href} target={cv.external ? '_blank' : undefined} rel={cv.external ? 'noopener' : undefined}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3h7l3 3v15H7V3Z"/><path d="M14 3v4h3M9 12h6M9 16h4"/></svg>
-            Download CV
-          </a>
-          <a class="link-pill" href={site.linkedin} target="_blank" rel="noopener">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="20" height="20" rx="4"/><path d="M7 10v7M7 7v.01M11 17v-4a2 2 0 014 0v4M11 10v7"/></svg>
-            LinkedIn
-          </a>
-          <a class="link-pill" href={site.github} target="_blank" rel="noopener">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 19c-4 1.5-4-2.5-5-3m10 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 00-1.3-3.2 4.2 4.2 0 00-.1-3.2s-1-.3-3.3 1.3a11.5 11.5 0 00-6 0C6.3 2.8 5.3 3.1 5.3 3.1a4.2 4.2 0 00-.1 3.2A4.6 4.6 0 004 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1-.5 2V21"/></svg>
-            GitHub
-          </a>
-          <a class="link-pill" href={site.youtube} target="_blank" rel="noopener">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M23 7s-.3-2-1.2-2.7c-1.1-1.2-2.4-1.2-3-1.3C16.4 3 12 3 12 3s-4.4 0-6.8.1c-.6 0-1.9.1-3 1.2C1.3 5 1 7 1 7S.7 9.2.7 11.5v2.1c0 2.2.3 4.4.3 4.4s.3 2 1.2 2.7c1.1 1.2 2.6 1.1 3.3 1.2C7.5 22 12 22 12 22s4.4 0 6.8-.2c.6 0 1.9-.1 3-1.2.9-.8 1.2-2.7 1.2-2.7s.3-2.2.3-4.4v-2.1C23.3 9.2 23 7 23 7zM9.7 15.5V8.4l8.1 3.6-8.1 3.5z"/></svg>
-            YouTube
-          </a>
-          <a class="link-pill" href={`mailto:${site.email}`}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16v12H4V6Z"/><path d="M4 7l8 6 8-6"/></svg>
-            Email
-          </a>
-        </div>
-      </div>
-      <div class="hero-card">
-        <div class="card-head">DATASHEET</div>
-        {site.datasheet.map(row => (
-          <div class="stat">
-            <span class="stat-k">{row.key}</span>
-            <span class="stat-v">
-              {row.dot && <span class="dot"></span>}
-              {row.value}
-            </span>
-          </div>
-        ))}
-      </div>
+  <!-- ── Hero: statement, datasheet, title block ── -->
+  <section class="hero">
+    <div class="hero-main">
+      <h1 class="statement">{site.tagline.split(/(?<=\.)\s+/).map(line => <span class="stmt-line">{line}</span>)}</h1>
+      <p class="lead">{site.lead}</p>
     </div>
-  </div>
 
-  <hr>
+    <table class="rev">
+      <caption>Currently</caption>
+      <tbody>
+        <tr><th scope="row"><span class="now-dot" aria-hidden="true"></span>Working on</th><td>{site.currently}</td></tr>
+      </tbody>
+    </table>
 
-  <section id="about" class="alt">
-    <div class="wrap">
-      <div class="sec-label">About</div>
-      <h2>A bit about <em>me.</em></h2>
-      <div class="about-top fade">
-        <div class="about-photo" id="aboutPhoto">
-          <img src="/me.jpg" alt={site.name} onerror="this.parentElement.classList.add('no-photo');this.style.display='none'">
-          <div class="photo-fallback">
-            <div class="fallback-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 016-6h4a6 6 0 016 6v1"/></svg>
-            </div>
-            <div class="fallback-label">add me.jpg<br>to /public/</div>
-          </div>
-        </div>
-        <div class="facts">
-          {site.facts.map(f => (
-            <div class="fact">
-              <span class="fact-k">{f.key}</span>
-              <span class="fact-v">{f.value}</span>
-            </div>
+    <div class="hero-plate">
+      <table class="datasheet">
+        <caption>Datasheet</caption>
+        <tbody>
+          {site.datasheet.map(row => (
+            <tr>
+              <th scope="row">{row.key}</th>
+              <td>{row.value.split(' · ').map((part, i) => <>{i > 0 && ' · '}<span class="ds-part">{part}</span></>)}</td>
+            </tr>
           ))}
+        </tbody>
+      </table>
+
+      <div class="titleblock">
+        <div class="tb-name">
+          <span class="tb-who">{site.name}</span>
+          <span class="tb-role">{site.title}</span>
         </div>
-      </div>
-      <div class="about-bio fade">
-        {site.bio.map(para => (
-          <p set:html={renderBio(para)} />
-        ))}
-      </div>
-    </div>
-  </section>
-
-  <hr>
-
-  <section id="skills">
-    <div class="wrap">
-      <div class="sec-label">Skills</div>
-      <h2>What I work with.</h2>
-      <div class="skills-grid">
-        {site.skills.map(group => (
-          <div class="skill-group fade">
-            <div class="skill-label">{group.label}</div>
-            <ul class="skill-list">
-              {group.items.map(item => <li>{item}</li>)}
-            </ul>
-          </div>
-        ))}
-      </div>
-    </div>
-  </section>
-
-  <hr>
-
-  <section id="projects" class="alt">
-    <div class="wrap">
-      <div class="rail-header">
-        <div><div class="sec-label">Projects</div><h2>Things I'm <em>building.</em></h2></div>
-        <div class="scroll-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>drag to scroll</div>
-      </div>
-      <div class="rail-wrap">
-        <div class="rail">
-          {projects.map(p => (
-            <a class="p-card fade" href={`/projects/${p.id}`}>
-              <div class={`p-card-icon ${typeIcon[p.data.type]}`}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" set:html={icons[p.data.type]} />
-              </div>
-              <span class={`type-badge ${typeBadge[p.data.type]}`}>{p.data.type === 'wip' ? 'In progress' : p.data.type}</span>
-              <div class="p-card-title">{p.data.title}</div>
-              <p class="p-card-desc">{p.data.description}</p>
-              <div class="p-card-tags">{p.data.tags.map(t => <span class="chip">{t}</span>)}</div>
-              <div class="p-card-foot"><span>{p.data.status ?? p.data.date}</span><span class="p-card-cta">Read →</span></div>
+        {cvReady
+          ? <a class="tb-cell tb-half tb-primary" href={cv.href} {...cvAttrs}>
+              <span class="tb-k">CV</span>
+              <span class="tb-v">Download PDF
+                <svg class="arrow" viewBox="0 0 16 16" aria-hidden="true" set:html={arrows.download} />
+              </span>
             </a>
-          ))}
-          <div class="p-card ghost">
-            <span class="type-badge badge-soon">Coming soon</span>
-            <div class="p-card-title">More on the way.</div>
-            <p class="p-card-desc">Projects documented here as they reach a shareable state.</p>
-            <div class="p-card-tags"><span class="chip">Watch this space</span></div>
-          </div>
-        </div>
-        <div class="rail-fade"></div>
+          : <div class="tb-cell tb-half tb-static">
+              <span class="tb-k">CV</span><span class="tb-v tb-soon">Coming soon</span>
+            </div>}
+        <a class:list={['tb-cell tb-half', !cvReady && 'tb-primary']} href={`mailto:${site.email}`}>
+          <span class="tb-k">Email</span>
+          <span class="tb-v">Send me a message
+            <svg class="arrow" viewBox="0 0 16 16" aria-hidden="true" set:html={arrows.read} />
+          </span>
+        </a>
+        <a class="tb-cell tb-half" href={site.linkedin} target="_blank" rel="noopener">
+          <span class="tb-k">LinkedIn</span><span class="tb-v">{handle(site.linkedin)}</span>
+        </a>
+        <a class="tb-cell tb-half" href={site.github} target="_blank" rel="noopener">
+          <span class="tb-k">GitHub</span><span class="tb-v">{handle(site.github)}</span>
+        </a>
+        {site.youtube
+          ? <a class="tb-cell tb-half" href={site.youtube} target="_blank" rel="noopener">
+              <span class="tb-k">YouTube</span><span class="tb-v">Watch the channel</span>
+            </a>
+          : <div class="tb-cell tb-half tb-static">
+              <span class="tb-k">YouTube</span><span class="tb-v tb-soon">Channel coming soon</span>
+            </div>}
+        {!credential.value
+          ? <div class="tb-cell tb-half tb-static"><span class="tb-k">Site updated</span><span class="tb-v">{builtOn}</span></div>
+          : credential.href
+            ? <a class="tb-cell tb-half" href={credential.href} target="_blank" rel="noopener">
+                <span class="tb-k">{credential.label}</span><span class="tb-v">{credential.value}</span>
+              </a>
+            : <div class="tb-cell tb-half tb-static"><span class="tb-k">{credential.label}</span><span class="tb-v">{credential.value}</span></div>}
       </div>
     </div>
   </section>
 
-  <hr>
-
-  <section id="resources">
-    <div class="wrap">
-      <div class="rail-header">
-        <div><div class="sec-label">Resources</div><h2>Useful stuff, <em>freely shared.</em></h2></div>
-        <div class="scroll-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>drag to scroll</div>
+  <!-- ── About ── -->
+  <section id="about" class="sec">
+    <h2>{headings.about}</h2>
+    <div class="about">
+      <div class="bio">
+        {site.bio.map(para => <p set:html={inlineBold(para)} />)}
       </div>
-      <div class="rail-wrap">
-        <div class="rail">
-          {resources.map(r => (
-            <div class="p-card fade">
-              <div class={`p-card-icon ${typeIcon[r.data.type]}`}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" set:html={icons[r.data.type]} />
-              </div>
-              <span class={`type-badge ${typeBadge[r.data.type]}`}>{r.data.type}</span>
-              <div class="p-card-title">{r.data.title}</div>
-              <p class="p-card-desc">{r.data.description}</p>
-              <div class="p-card-tags">{r.data.tags.map(t => <span class="chip">{t}</span>)}</div>
-              <div class="p-card-foot">
-                <span>{r.data.updated}</span>
-                {r.data.file
-                  ? <a class="p-card-dl" href={`/files/${r.data.file}`} download onclick="event.stopPropagation()">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download
-                    </a>
-                  : r.data.url
-                    ? <a class="p-card-cta" href={r.data.url} target="_blank" rel="noopener">Open ↗</a>
-                    : <a class="p-card-cta" href={`/resources/${r.id}`}>Read →</a>
-                }
-              </div>
-            </div>
-          ))}
-        </div>
-        <div class="rail-fade"></div>
-      </div>
+      <figure class="photo">
+        {site.photo
+          ? <img src={site.photo} alt={`Photo of ${site.name}`} width="480" height="600" />
+          : <div class="photo-empty" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="3.5"/><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5"/></svg>
+              <span>Photo coming soon</span>
+            </div>}
+      </figure>
     </div>
   </section>
 
-  <hr>
+  <!-- ── Skills ── -->
+  <section id="skills" class="sec">
+    <h2>{headings.skills}</h2>
+    <table class="parts">
+      <tbody>
+        {site.skills.map(group => (
+          <tr>
+            <th scope="row">{group.label}</th>
+            <td><ul class="parts-items">{group.items.map(item => <li>{item}</li>)}</ul></td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </section>
 
-  <section id="ventures" class="alt">
-    <div class="wrap">
-      <div class="rail-header">
-        <div><div class="sec-label">Ventures</div><h2>Building things <em>beyond</em> the day job.</h2></div>
-        <div class="scroll-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>drag to scroll</div>
-      </div>
-      <div class="rail-wrap">
-        <div class="rail">
-          {ventures.map(v => (
-            <div class="v-card fade">
-              <div class="v-card-top">
-                <div class="v-logo">{v.data.logo ? <img src={v.data.logo} alt={`${v.data.name} logo`} /> : v.data.name.slice(0,2).toUpperCase()}</div>
-                <div>
-                  <span class={`v-status-badge status-${v.data.status}`}>{v.data.status}</span>
-                  <div class="v-name" style="margin-top:5px">{v.data.name}</div>
-                </div>
-              </div>
-              <p class="v-tagline">{v.data.tagline}</p>
-              {(v.data.url || v.data.email) && (
-                <div class="v-foot">
-                  {v.data.url && <a class="link-pill" href={v.data.url} target="_blank" rel="noopener" style="font-size:0.72rem;padding:6px 13px">Visit site →</a>}
-                  {v.data.email && <a class="link-pill" href={`mailto:${v.data.email}`} style="font-size:0.72rem;padding:6px 13px">Get in touch</a>}
-                </div>
-              )}
-            </div>
-          ))}
-          <div class="v-card ghost">
-            <div class="v-ghost-plus">+</div>
-            <div class="v-ghost-label">More ventures<br>on the way</div>
-          </div>
-        </div>
-        <div class="rail-fade"></div>
+  <!-- ── Resources ── -->
+  <section id="resources" class="sec">
+    <div class="rail-head">
+      <h2>{headings.resources}</h2>
+      <div class="rail-nav">
+        <button class="rail-btn" type="button" data-dir="-1" aria-label="Scroll resources back"><svg class="arrow" viewBox="0 0 16 16" aria-hidden="true" set:html={arrows.back} /></button>
+        <button class="rail-btn" type="button" data-dir="1" aria-label="Scroll resources forward"><svg class="arrow" viewBox="0 0 16 16" aria-hidden="true" set:html={arrows.read} /></button>
       </div>
     </div>
+    <div class="rail-wrap">
+      <ul class="rail" tabindex="0" aria-label="Resources">
+        {resources.map(r => {
+          const link = r.data.file
+            ? { href: `/files/${r.data.file}`, verb: 'Download', icon: arrows.download, attrs: { download: true } }
+            : r.data.url
+              ? { href: r.data.url, verb: 'Open', icon: arrows.open, attrs: { target: '_blank', rel: 'noopener' } }
+              : { href: `/resources/${r.id}`, verb: 'Read', icon: arrows.read, attrs: {} };
+          return (
+            <li class="tile">
+              <p class="tile-top"><span>{resourceTypeLabel[r.data.type]}</span><span>{r.data.updated}</span></p>
+              <h3 class="tile-title"><a class="tile-link" href={link.href} {...link.attrs}>{r.data.title}</a></h3>
+              <p class="tile-desc">{r.data.description}</p>
+              <p class="tile-tags">{r.data.tags.join(', ')}</p>
+              <p class="tile-go">{link.verb} <svg class="arrow" viewBox="0 0 16 16" aria-hidden="true" set:html={link.icon} /></p>
+            </li>
+          );
+        })}
+        {resources.length === 0 && (
+          <li class="tile tile-soon">
+            <p class="tile-top"><span>Coming soon</span></p>
+            <h3 class="tile-title">Templates and guides on the way</h3>
+            <p class="tile-desc">Things worth sharing land here as they're ready.</p>
+          </li>
+        )}
+        {(resources.length ? [1] : [1, 2, 3]).map(() => <li class="tile tile-slot" aria-hidden="true"></li>)}
+      </ul>
+    </div>
+    <div class="rail-foot" aria-hidden="true">
+      <span class="rail-count"></span>
+      <span class="rail-track"><span class="rail-thumb"></span></span>
+    </div>
+  </section>
+
+  <!-- ── Projects ── -->
+  <section id="projects" class="sec">
+    <div class="rail-head">
+      <h2>{headings.projects}</h2>
+      <div class="rail-nav">
+        <button class="rail-btn" type="button" data-dir="-1" aria-label="Scroll projects back"><svg class="arrow" viewBox="0 0 16 16" aria-hidden="true" set:html={arrows.back} /></button>
+        <button class="rail-btn" type="button" data-dir="1" aria-label="Scroll projects forward"><svg class="arrow" viewBox="0 0 16 16" aria-hidden="true" set:html={arrows.read} /></button>
+      </div>
+    </div>
+    <div class="rail-wrap">
+      <ul class="rail" tabindex="0" aria-label="Projects">
+        {projects.map(p => (
+          <li class="tile">
+            <p class="tile-top"><span>{projectTypeLabel[p.data.type]}</span><span>{p.data.status ?? p.data.date}</span></p>
+            <h3 class="tile-title"><a class="tile-link" href={`/projects/${p.id}`}>{p.data.title}</a></h3>
+            <p class="tile-desc">{p.data.description}</p>
+            <p class="tile-tags">{p.data.tags.join(', ')}</p>
+            <p class="tile-go">Read <svg class="arrow" viewBox="0 0 16 16" aria-hidden="true" set:html={arrows.read} /></p>
+          </li>
+        ))}
+        {projects.length === 0 && (
+          <li class="tile tile-soon">
+            <p class="tile-top"><span>Coming soon</span></p>
+            <h3 class="tile-title">Build write-ups on the way</h3>
+            <p class="tile-desc">Projects land here as they reach a shareable state.</p>
+          </li>
+        )}
+        {(projects.length ? [1] : [1, 2, 3]).map(() => <li class="tile tile-slot" aria-hidden="true"></li>)}
+      </ul>
+    </div>
+    <div class="rail-foot" aria-hidden="true">
+      <span class="rail-count"></span>
+      <span class="rail-track"><span class="rail-thumb"></span></span>
+    </div>
+  </section>
+
+  <!-- ── Ventures ── -->
+  <section id="ventures" class="sec">
+    <div class="rail-head">
+      <h2>{headings.ventures}</h2>
+      <div class="rail-nav">
+        <button class="rail-btn" type="button" data-dir="-1" aria-label="Scroll ventures back"><svg class="arrow" viewBox="0 0 16 16" aria-hidden="true" set:html={arrows.back} /></button>
+        <button class="rail-btn" type="button" data-dir="1" aria-label="Scroll ventures forward"><svg class="arrow" viewBox="0 0 16 16" aria-hidden="true" set:html={arrows.read} /></button>
+      </div>
+    </div>
+    <div class="rail-wrap">
+      <ul class="rail" tabindex="0" aria-label="Ventures">
+        {ventures.map(v => (
+          <li class="tile">
+            <div class="venture-head">
+              <div class="venture-mark">
+                {v.data.logo ? <img src={v.data.logo} alt="" /> : v.data.name.slice(0, 2).toUpperCase()}
+              </div>
+              <p class="tile-top"><span>{ventureStatusLabel[v.data.status]}</span></p>
+            </div>
+            <h3 class="tile-title">
+              {v.data.url ? <a class="tile-link" href={v.data.url} target="_blank" rel="noopener">{v.data.name}</a> : v.data.name}
+            </h3>
+            <p class="tile-desc">{v.data.tagline}</p>
+            {v.data.url && <p class="tile-go">Visit site <svg class="arrow" viewBox="0 0 16 16" aria-hidden="true" set:html={arrows.open} /></p>}
+          </li>
+        ))}
+        {ventures.length === 0 && (
+          <li class="tile tile-soon">
+            <p class="tile-top"><span>Coming soon</span></p>
+            <h3 class="tile-title">Something's in the works</h3>
+            <p class="tile-desc">Details to follow when it's ready to share.</p>
+          </li>
+        )}
+        {(ventures.length ? [1] : [1, 2, 3]).map(() => <li class="tile tile-slot" aria-hidden="true"></li>)}
+      </ul>
+    </div>
+    <div class="rail-foot" aria-hidden="true">
+      <span class="rail-count"></span>
+      <span class="rail-track"><span class="rail-thumb"></span></span>
+    </div>
+  </section>
+
+  <!-- ── Close: consulting ── -->
+  <section class="close">
+    <p class="close-note" set:html={consulting} />
+    <a class="close-mail" href={`mailto:${site.email}`}>
+      Get in touch
+      <svg class="arrow" viewBox="0 0 16 16" aria-hidden="true" set:html={arrows.read} />
+    </a>
   </section>
 
 </Base>

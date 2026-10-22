@@ -1,0 +1,70 @@
+---
+// Shared layout for Markdown-rendered pages (projects and resources).
+import type { MarkdownHeading } from 'astro';
+import 'katex/dist/katex.min.css';
+
+interface Props {
+  back: { href: string; label: string };
+  title: string;
+  description: string;
+  tags: string[];
+  meta: string[];
+  links?: { href: string; label: string }[];
+  headings: MarkdownHeading[];
+  draft?: boolean;
+}
+
+const { back, title, description, tags, meta, links = [], headings, draft = false } = Astro.props;
+
+// Auto table of contents — show when there are at least 3 top-level sections.
+const toc = headings.filter(h => h.depth >= 2 && h.depth <= 3);
+const showToc = headings.filter(h => h.depth === 2).length >= 3;
+---
+<article class="article">
+  <div class="article-top">
+    <a class="back" href={back.href}>
+      <svg class="arrow" viewBox="0 0 16 16" aria-hidden="true"><path d="M14 8H3M7.5 3.5 3 8l4.5 4.5"/></svg>
+      {back.label}
+    </a>
+    {draft && <p class="draft-flag">Draft · dev preview only</p>}
+  </div>
+
+  <header class="article-head">
+    <h1 class="article-title">{title}</h1>
+    <p class="article-lead">{description}</p>
+    <p class="article-meta">{meta.map(m => <span>{m}</span>)}</p>
+    {tags.length > 0 && <p class="article-tags">{tags.join(', ')}</p>}
+    {links.length > 0 && (
+      <p class="article-links">
+        {links.map(l => (
+          <a href={l.href} target="_blank" rel="noopener">{l.label}
+            <svg class="arrow" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 12 12 4M5.5 4H12v6.5"/></svg>
+          </a>
+        ))}
+      </p>
+    )}
+  </header>
+
+  {showToc && (
+    <nav class="toc" aria-label="Contents">
+      <details class="toc-box" open>
+        <summary class="toc-title">Contents</summary>
+        <ol>
+          {toc.map(h => <li class={`toc-d${h.depth}`}><a href={`#${h.slug}`}>{h.text}</a></li>)}
+        </ol>
+      </details>
+    </nav>
+  )}
+
+  <div class="prose"><slot /></div>
+</article>
+
+<script>
+  // Wide screens: the contents rail is always open (CSS hides the toggle).
+  // Narrow screens: it starts collapsed above the text.
+  const box = document.querySelector<HTMLDetailsElement>('.toc-box');
+  const wide = window.matchMedia('(min-width: 1024px)');
+  const sync = () => { if (box) box.open = wide.matches; };
+  sync();
+  wide.addEventListener('change', sync);
+</script>

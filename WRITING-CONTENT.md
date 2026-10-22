@@ -1,7 +1,7 @@
 # Writing content
 
-Everything on the site — projects, resources, ventures — is a **Markdown file**.
-Drop a file in the right folder and a card appears automatically; there's no
+Everything on this site — projects, resources, ventures — is a **Markdown file**.
+Drop a file in the right folder and a tile appears in its rail; there's no
 admin panel and no code to touch. This guide covers where files go, the
 frontmatter each type needs, and every Markdown feature the pages support.
 
@@ -14,14 +14,19 @@ frontmatter each type needs, and every Markdown feature the pages support.
 
 ```
 src/content/
-├── projects/    ← one .md per project
 ├── resources/   ← one .md per resource or article
-└── ventures/    ← one .md per venture
+├── projects/    ← one .md per project
+├── ventures/    ← one .md per venture
+└── Templates/   ← copy-from examples (not published)
 ```
 
+An empty section shows a **Coming soon** tile until its first file arrives.
+
 - The **filename becomes the URL**: `my-build.md` → `/projects/my-build`.
-- The repo ships with `example-*` files in each folder — read them, then delete them.
+- The repo ships with `example-*` files in each folder. Read them, then delete them.
 - To hide something without deleting it, set `draft: true` in the frontmatter.
+  Drafts never reach the built site, but their pages still open under `npm run dev`
+  (with a "Draft" flag) so you can preview them.
 - Images can live in an `images/` folder next to the `.md` file, or in `public/`
   (referenced from the site root, e.g. `/photo.jpg`).
 
@@ -37,13 +42,13 @@ the rest are optional.
 | Field | Req | Notes |
 |-------|-----|-------|
 | `title` | ✓ | |
-| `description` | ✓ | One sentence — card text and page intro |
-| `type` | ✓ | `build` · `guide` · `document` · `wip` |
-| `tags` | ✓ | e.g. `[KiCad, MSP430]` |
+| `description` | ✓ | One sentence — tile text and page intro |
+| `type` | ✓ | `build` (Build log) · `guide` · `document` · `wip` (In progress) |
+| `tags` | ✓ | e.g. `[Electronics, PCB]` |
 | `date` | ✓ | `"YYYY-MM"` — newest sorts first |
 | `status` | — | Shown instead of the date if set |
-| `repo` | — | URL — adds a “GitHub repo” button |
-| `youtube` | — | URL — adds a “Watch” button |
+| `repo` | — | URL — adds a “GitHub repo” link on the page |
+| `youtube` | — | URL — adds a “Watch on YouTube” link on the page |
 | `featured` | — | `true` pins it to the front of the rail |
 | `draft` | — | `true` hides it |
 
@@ -54,8 +59,8 @@ A resource resolves **one of three ways**, in priority order:
 | Frontmatter | Result |
 |-------------|--------|
 | `file: thing.pdf` | **Download** button (file goes in `public/files/`) |
-| `url: https://…` | **Open ↗** link to anything hosted elsewhere |
-| neither | A readable **page** is generated (`Read →`) |
+| `url: https://…` | **Open** link to anything hosted elsewhere |
+| neither | A readable **page** is generated (**Read**) |
 
 | Field | Req | Notes |
 |-------|-----|-------|
@@ -63,7 +68,7 @@ A resource resolves **one of three ways**, in priority order:
 | `description` | ✓ | |
 | `type` | ✓ | `template` · `checklist` · `guide` · `config` |
 | `tags` | ✓ | |
-| `updated` | ✓ | `"Mon YYYY"` e.g. `"Mar 2025"` |
+| `updated` | ✓ | `"Mon YYYY"` e.g. `"Mar 2026"` |
 | `file` | — | Local download (see table above) |
 | `url` | — | External link |
 | `featured` | — | `true` pins it to the front |
@@ -76,11 +81,11 @@ A resource resolves **one of three ways**, in priority order:
 | `name` | ✓ | |
 | `tagline` | ✓ | |
 | `status` | ✓ | `active` · `development` · `stealth` · `complete` |
-| `founded` | — | |
-| `domain` | — | Shown as a tag |
+| `founded` | — | Not currently shown |
+| `domain` | — | Not currently shown |
 | `logo` | — | Path in `public/` — else initials are used |
-| `url` | — | URL — “Visit site” button |
-| `email` | — | Email — “Get in touch” button |
+| `url` | — | URL — makes the tile a link, with “Visit site” |
+| `email` | — | Not currently shown |
 | `draft` | — | `true` hides it |
 
 ---
@@ -103,7 +108,8 @@ never touch CSS.
 ```
 
 Start body headings at `##` — the page title comes from the frontmatter. Each
-`##` automatically gets an accent marker; you don't add anything.
+`##` automatically gets a thin rule above it to separate sections; you don't add
+anything.
 
 ### Lists
 
@@ -136,14 +142,14 @@ Highlighting matches light and dark mode automatically.
 ![This text becomes a caption underneath the image.](./images/board.jpg)
 ```
 
-The image renders full-width, and the **alt text is shown as a centred caption**
-beneath it. Want an image with *no* caption? Leave the alt text empty:
+The image renders full-width with rounded corners, and the **alt text is shown as a
+caption** beneath it. Want an image with *no* caption? Leave the alt text empty:
 `![](./images/decorative.jpg)`.
 
 ### Quotes / callouts
 
 ```markdown
-> Start a line with `>` for a styled callout box.
+> Start a line with `>` for a quote or aside — set in softer text with a rule on the left.
 ```
 
 ### Tables
@@ -184,9 +190,10 @@ no client-side scripts and no slow page loads.
 
 You don't do anything for these — they're built into the page:
 
-- The **first paragraph** gets a drop cap and slightly larger “lead” text.
-- A **“X min read”** estimate, from the word count.
-- **Accent markers** above each `##`, a contained reading card, and full
+- The **description** from the frontmatter becomes the intro under the title, and a
+  muted line beneath it shows the type, date and a **“X min read”** estimate, with
+  the tags below.
+- A **thin rule** above each `##`, a comfortable reading width, and full
   **light/dark** theming.
 - A **table of contents** is built from your `##`/`###` headings on any piece
   with three or more sections, and **every heading is deep-linkable** — you can
@@ -194,9 +201,24 @@ You don't do anything for these — they're built into the page:
 
 ---
 
+## Embeds
+
+### Video / YouTube embeds
+
+Paste YouTube's embed code (Share → Embed) straight into the Markdown. Any
+`<iframe>` is automatically sized to the full column width at 16:9:
+
+```html
+<iframe src="https://www.youtube-nocookie.com/embed/VIDEO_ID" title="Board bring-up"
+  allowfullscreen></iframe>
+```
+
+Use the `youtube-nocookie.com` address for the privacy-friendly player.
+
+---
+
 ## Not enabled by default
 
-These aren't set up, but are easy to add if you want them:
+This isn't set up, but is easy to add if you want it:
 
-- **Video / YouTube embeds** (work via a raw `<iframe>`, but want a responsive wrapper)
 - **Coloured Info / Warning / Tip callouts** beyond the basic `>` quote

@@ -1,54 +1,34 @@
 ---
 import Base from '../../layouts/Base.astro';
+import Article from '../../components/Article.astro';
 import { getCollection, render } from 'astro:content';
 import { site } from '../../site.config';
-import 'katex/dist/katex.min.css';
+import { resourceTypeLabel, readingMinutes, routable } from '../../lib/content';
 
 export async function getStaticPaths() {
   // Only resources without a file *and* without an external url get a page.
-  const resources = await getCollection('resources', e => !e.data.draft && !e.data.file && !e.data.url);
+  const resources = await getCollection('resources', e => routable(e) && !e.data.file && !e.data.url);
   return resources.map(r => ({ params: { slug: r.id }, props: { resource: r } }));
 }
 
 const { resource } = Astro.props;
 const { Content, headings } = await render(resource);
-
-// Auto table of contents — show when there are at least 3 top-level sections.
-const toc = headings.filter(h => h.depth >= 2 && h.depth <= 3);
-const showToc = headings.filter(h => h.depth === 2).length >= 3;
-
-const typeBadge: Record<string,string> = {
-  template:'badge-template', checklist:'badge-checklist', guide:'badge-guide', config:'badge-config',
-};
-
-const words = (resource.body ?? '').trim().split(/\s+/).filter(Boolean).length;
-const readMins = Math.max(1, Math.round(words / 200));
+const d = resource.data;
 ---
-<Base title={`${resource.data.title} — ${site.name}`} description={resource.data.description}>
-  <div class="wrap">
-    <a class="reading-back" href="/#resources">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-      Back to resources
-    </a>
-    <article class="reading">
-      <div class="article-meta">
-        <span class={`type-badge ${typeBadge[resource.data.type]}`}>{resource.data.type}</span>
-        <span class="dim">Updated {resource.data.updated}</span>
-        <span class="dim">{readMins} min read</span>
-      </div>
-      <h1 class="article-title">{resource.data.title}</h1>
-      <p class="article-lead">{resource.data.description}</p>
-      <div class="article-tags">{resource.data.tags.map(t => <span class="chip">{t}</span>)}</div>
-      <hr class="article-rule">
-      {showToc && (
-        <details class="toc" open>
-          <summary>Contents</summary>
-          <ul>
-            {toc.map(h => <li class={`toc-d${h.depth}`}><a href={`#${h.slug}`}>{h.text}</a></li>)}
-          </ul>
-        </details>
-      )}
-      <div class="prose"><Content /></div>
-    </article>
-  </div>
+<Base title={`${d.title} — ${site.name}`} description={d.description}>
+  <Article
+    back={{ href: '/#resources', label: 'Back to resources' }}
+    title={d.title}
+    description={d.description}
+    tags={d.tags}
+    meta={[
+      resourceTypeLabel[d.type],
+      `Updated ${d.updated}`,
+      `${readingMinutes(resource.body)} min read`,
+    ]}
+    headings={headings}
+    draft={d.draft}
+  >
+    <Content />
+  </Article>
 </Base>
